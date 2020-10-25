@@ -1,0 +1,12 @@
+{
+  "name": "microservice-tracing-example",
+  "version": "0.0.1",
+  "main": "index.js",
+  "private": true,
+  "repository": "https://github.com/svirs/microservice-tracing-example.git",
+  "author": "svirs <1.singh.shur@gmail.com>",
+  "license": "MIT",
+  "workspaces": [
+    "workspaces/*"
+  ]
+}

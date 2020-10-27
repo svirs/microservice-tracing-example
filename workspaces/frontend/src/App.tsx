@@ -1,31 +1,51 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect, useRef, useReducer } from 'react';
+import { nodeState } from 'common/src'
+
+const predefinedGraph = [
+  { id: 1, children: [2, 3, 4], "workTime": 150 },
+  { id: 2, children: [], "workTime": 200 },
+  { id: 3, children: [5], "workTime": 250 },
+  { id: 4, children: [6, 7], "workTime": 300 },
+  { id: 5, children: [], "workTime": 300 },
+  { id: 6, children: [], "workTime": 350 },
+  { id: 7, children: [8], "workTime": 400 },
+  { id: 8, children: [], "workTime": 1000 },
+];
 
 function App() {
-  const ws = new WebSocket('ws://localhost:8000');
-  ws.onopen = function () {
-    console.log('websocket is connected ...')};
-  ws.onmessage = console.log;
-  fetch('/create?setup=[{"id":1,"children":[2,3],"workTime":3000,"isRoot":true},{"id":2,"children":[4],"workTime":3000},{"id":4,"children":[],"workTime":3000},{"id":3,"children":[],"workTime":3000}]').then(d => d.text().then(console.log), console.log)
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+  const [info, setInfo] = useState(null);
+  const [nodeStatuses, setNodeStatuses] = useState<{ [id: string]: { time: number, state: nodeState } }>({})
+  const ws = useRef<WebSocket>();
+
+  useEffect(() => {
+    ws.current = new WebSocket('ws://localhost:8000');
+    ws.current.onopen = () => console.log('Websocket Connected!')
+    ws.current.onclose = (evt) => console.log('Websocket Closed!', evt);
+    ws.current.onerror = (evt) => console.log('Websocket Error! ', evt);
+    return () => {
+      ws.current?.close()
+    }
+  }, []);
+
+  useEffect(() => {
+    if (ws.current) {
+      ws.current.onmessage = (msg) => {
+        debugger;
+        const { name, state, time } = JSON.parse(msg.data?.match(/\|\| (.*)\n/)[1]);
+        if (!nodeStatuses[name] || time > nodeStatuses[name].time) {
+          setNodeStatuses({ ...nodeStatuses, [name]: { time, state } });
+        }
+      };
+    }
+  }, [setNodeStatuses, nodeStatuses]);
+
+  useEffect(() => {
+    fetch(`/create?setup=${JSON.stringify(predefinedGraph)}`)
+      .then(data => data.json())
+      .then(setInfo)
+      .catch(err => { throw err });
+  }, [setInfo])
+  return <h1>{JSON.stringify(nodeStatuses)}</h1>;
 }
 
 export default App;

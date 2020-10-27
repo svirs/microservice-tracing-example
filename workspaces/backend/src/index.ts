@@ -17,23 +17,26 @@ httpServer.listen(PORT)
 let children: ChildProcess[] = []
 
 app.get("/create", async (req: Request, res: Response) => {
-  children.forEach(childProcess => childProcess?.kill());
+  children.forEach(childProcess => childProcess.kill());
   children = [];
 
   const setup = req.query.setup;
   if (typeof setup === "string") {
-    console.log(deserialize(setup));
-    for (const args of deserialize(setup)) {
+    const serviceGraph = deserialize(setup)
+    for (const args of serviceGraph) {
       const c = spawn('yarn', ['start', ...args], {
         cwd: '../microservice',
       });
       c.stdout.on('data', (data) => {
-        console.log(args, data.toString());
-        wss.clients.forEach(client => client.send(data?.toString(), err => console.log('ws send', err)))
+        const msg: string = data?.toString();
+        if (msg.startsWith("MSG")) {
+          console.log(msg)
+          wss.clients.forEach(client => client.send(msg, () => {}));
+        }
       })
       children.push(c)
     }
-    res.status(200).send(deserialize(setup));
+    res.status(200).send(serviceGraph);
   } else {
     res.status(400).send("bad setup");
   }

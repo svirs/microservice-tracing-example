@@ -2,7 +2,6 @@ export interface node {
   id: string,
   children: string[],
   workTime: number,
-  isRoot?: boolean
 }
 
 
@@ -17,8 +16,6 @@ export function deserialize(jsonString: string, startingPort = 4500): string[][]
   }
   if (!Array.isArray(input)) {
     throw Error('Set-up json is not an array');
-  } else if (input.filter((n: node) => n.isRoot).length < 1) {
-    throw Error('Set-up json missing a root node, no valid target');
   }
 
   const nodeToPort = input.reduce((acc: { [k: string]: number }, { id }: node) => {
@@ -36,10 +33,5 @@ export function deserialize(jsonString: string, startingPort = 4500): string[][]
 }
 
 export function serialize(nodes: node[]) {
-  if (nodes.filter((n: node) => n.isRoot).length < 1) {
-    throw Error('Missing initally queryable nodes!')
-  }
   return JSON.stringify(nodes)
 }
-
-// [{ id: 1, children: [2, 3], workTime: 3000, isRoot: true }, { id: 2, children: [4], workTime: 3000 }, { id: 4, children: [], workTime: 3000 }, { id: 3, children: [], workTime: 3000 }]

@@ -1,7 +1,7 @@
 export enum nodeState {
-  BOOTING,
-  READY,
-  WORKING,
-  WAITING,
-  DONE
+  BOOTING = 'BOOTING',
+  READY = 'READY',
+  WORKING = 'WORKING',
+  WAITING = 'WAITING',
+  DONE = 'DONE'
 }

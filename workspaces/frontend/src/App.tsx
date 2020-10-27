@@ -45,7 +45,9 @@ function App() {
       .then(setInfo)
       .catch(err => { throw err });
   }, [setInfo])
-  return <h1>{JSON.stringify(nodeStatuses)}</h1>;
+  return <h1>{JSON.stringify(
+    Object.entries(nodeStatuses).map(([k, {state}]) => ({name: k, state}))
+  )}</h1>;
 }
 
 export default App;

@@ -1,34 +1,28 @@
 import express, { Request, Response } from "express";
 import { spawn, ChildProcess } from 'child_process';
+import { deserialize } from 'common/src'; // https://github.com/microsoft/TypeScript/issues/33079
 
 const app = express();
 
-const children: ChildProcess[] = []
+let children: ChildProcess[] = []
 
 app.get("/create", async (req: Request, res: Response) => {
   children.forEach(childProcess => childProcess?.kill());
-  const setup = req.query.setup ?? '{"root":[]}'
-  // { root: ['node1', 'node2'], node1: [node: 3], node2: [], node3: []}
-  const nodeMap: {[k: string]: any} = {};
-  let port = 4000;
-  // name, port, workTime, ...targets
-  for (const [nodeID, targets] of Object.entries(JSON.parse(setup as string))) {
-    if (nodeID === 'root') continue;
-    nodeMap[nodeID as string] = {
-      name: nodeID,
-      port,
-      workTime: 2500,
-      targets: '[]'
+  children = [];
+
+  const setup = req.query.setup;
+  if (typeof setup === "string") {
+    for (const args of deserialize(setup)) {
+      const c = spawn('yarn', args, {
+        cwd: '../microservice',
+      });
+      c.stdout.on('data', (data) => console.log(setup[1], data?.toString()))
+      children.push(c)
     }
-    const c = spawn('yarn', ['start', nodeID, `${port}`, "2500", '[]'], {
-      cwd: '../microservice',
-    });
-    
-    c.stdout.on('data', (data) => console.log(data?.toString()))
-    children.push(c)
-    port += 1;
+    res.status(200).send(deserialize(setup));
+  } else {
+    res.status(400).send("bad setup");
   }
-  res.status(200).send("huh");
 });
 
 app.listen(8000, () => {

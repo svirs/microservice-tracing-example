@@ -8,7 +8,7 @@ export interface node {
 
 export type nodeSchemas = node[];
 
-export function deserialize(jsonString: string, startingPort = 4000): string[][] {
+export function deserialize(jsonString: string, startingPort = 4500): string[][] {
   let input: nodeSchemas;
   try {
     input = JSON.parse(jsonString);
@@ -22,10 +22,11 @@ export function deserialize(jsonString: string, startingPort = 4000): string[][]
   }
 
   const nodeToPort = input.reduce((acc: { [k: string]: number }, { id }: node) => {
-    acc[id] = startingPort++;
+    acc[id] = startingPort;
+    startingPort += 1;
     return acc;
   }, {});
-  
+
   return input.map(({ id, workTime, children }: node): string[] => [
     id,
     nodeToPort[id].toString(),

@@ -22,9 +22,9 @@ app.get("/create", async (req: Request, res: Response) => {
 
   const setup = req.query.setup;
   if (typeof setup === "string") {
-    const serviceGraph = deserialize(setup)
-    for (const args of serviceGraph) {
-      const c = spawn('yarn', ['start', ...args], {
+    const serviceGraph = deserialize(setup).map(args => () => Promise.resolve(args));
+    for await (const args of serviceGraph) {
+      const c = spawn('yarn', ['start', ... await args()], {
         cwd: '../microservice',
       });
       c.stdout.on('data', (data) => {

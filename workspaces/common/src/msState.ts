@@ -3,5 +3,5 @@ export enum nodeState {
   READY = 'READY',
   WORKING = 'WORKING',
   WAITING = 'WAITING',
-  DONE = 'DONE'
+  DONE = 'DONE',
 }

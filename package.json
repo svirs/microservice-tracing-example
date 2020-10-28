@@ -8,5 +8,8 @@
   "license": "MIT",
   "workspaces": [
     "workspaces/*"
-  ]
+  ],
+  "devDependencies": {
+    "prettier": "^2.1.2"
+  }
 }

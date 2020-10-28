@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import cytoscape from 'cytoscape';
 
-import { nodeState} from 'common/src';
+import { nodeState } from 'common/src';
 
 import './App.css';
 
@@ -174,7 +174,6 @@ function App() {
 
 export default App;
 
-
 /*
   TEMP moving this to thei workspace since there's a bug with CRA:
   https://github.com/facebook/create-react-app/issues/9127
@@ -192,4 +191,4 @@ function consumeLogMessage(
   } catch {
     throw new Error('Unabled to parse structured message');
   }
-};
+}

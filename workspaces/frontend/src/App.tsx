@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import cytoscape from 'cytoscape';
 
-import { nodeState } from 'common/src';
+import { nodeState} from 'common/src';
 
 import './App.css';
 
-const initialDAG = JSON.stringify(
+const initialGraph = JSON.stringify(
   {
     nodes: [
       {
@@ -50,14 +50,14 @@ const initialDAG = JSON.stringify(
 );
 
 function App() {
-  const [_, setInfo] = useState(null);
+  const [_, setInfo] = useState(null); // ts-ignore todo echo back url of endpoint to start off visualization
   const [nodeStatuses, setNodeStatuses] = useState<{
     [id: string]: { time: number; state: nodeState };
   }>({});
   const ws = useRef<WebSocket>();
   const cyto = useRef<cytoscape.Core>();
   const cytoRoot = useRef(null);
-  const [graphDefinition, setGraphDefinition] = useState<any>(initialDAG);
+  const [graphDefinition, setGraphDefinition] = useState<any>(initialGraph);
 
   let graphDefinitionObject: {
     nodes: { data: { id: string; workTime: number } }[];
@@ -83,22 +83,8 @@ function App() {
   useEffect(() => {
     if (ws.current) {
       ws.current.onmessage = (msg) => {
-        const { name, state, time } = JSON.parse(
-          msg.data?.match(/\|\| (.*)\n/)[1],
-        );
+        const { nodeId: name, state, time } = consumeLogMessage(msg.data);
         if (!nodeStatuses[name] || time > nodeStatuses[name].time) {
-          // if (name === 'b') {
-          //   console.log('SHUR', state)
-          // }
-          // cyto?.current?.getElementById(name).style('background-color',
-          //   {
-          //     'BOOTING': '#F00', // red
-          //     'READY': '#FA0',  // orange
-          //     'WORKING': '#FF0', // yellow
-          //     'WAITING': '#58E', // bluish
-          //     'DONE': '#0F0', // green
-          //   }[state as nodeState])
-          //   debugger;
           setNodeStatuses({ ...nodeStatuses, [name]: { time, state } });
         }
       };
@@ -151,9 +137,6 @@ function App() {
                 if (state == null) {
                   return '#AAA';
                 } else {
-                  if (ele.data('id') === 'b') {
-                    console.log('END', state);
-                  }
                   return {
                     BOOTING: '#F00', // red
                     READY: '#FA0', // orange
@@ -190,3 +173,23 @@ function App() {
 }
 
 export default App;
+
+
+/*
+  TEMP moving this to thei workspace since there's a bug with CRA:
+  https://github.com/facebook/create-react-app/issues/9127
+*/
+const JSON_DELIMITER = '_____';
+const regexMatcher = new RegExp(`${JSON_DELIMITER} (.*) ${JSON_DELIMITER}`);
+
+function consumeLogMessage(
+  data: string,
+): { time: number; nodeId: string; state: nodeState } {
+  const matches = data.match(regexMatcher);
+  const jsonMatch = matches && matches.length > 0 ? matches[1] : '';
+  try {
+    return JSON.parse(jsonMatch);
+  } catch {
+    throw new Error('Unabled to parse structured message');
+  }
+};

@@ -1,51 +1,39 @@
 import express, { Request, Response } from 'express';
 import { get } from 'http';
-import { nodeState } from 'common/src';
+import { nodeState, messageLogger } from 'common/src';
 
-const [name, port, workTime, ...targets] = process.argv.slice(2);
+const [nodeId, port, workTime, ...targets] = process.argv.slice(2);
 const workMS = parseInt(workTime, 10);
 
-console.log(
-  'MSG',
+messageLogger(
   'App starting',
-  '||',
-  JSON.stringify({
-    name,
-    port,
-    time: Date.now(),
+  {
+    nodeId,
     state: nodeState.BOOTING,
-  }),
+  },
+  true,
 );
 
 const app = express();
 
 app.get('/', async (req: Request, res: Response) => {
-  const traceId = req.query.traceId;
-  console.log(
-    'MSG',
+  messageLogger(
     'Starting work',
-    '||',
-    JSON.stringify({
-      name,
-      port,
-      time: Date.now(),
-      traceId,
+    {
+      nodeId,
       state: nodeState.WORKING,
-    }),
+    },
+    true,
   );
 
   await sleep(Number.isNaN(workMS) ? 2000 : workMS);
-  console.log(
-    'MSG',
+  messageLogger(
     'Finished work',
-    '||',
-    JSON.stringify({
-      name,
-      port,
-      time: Date.now(),
-      traceId,
+    {
+      nodeId,
       state: nodeState.WAITING,
-    }),
+    },
+    true,
   );
 
   let data = await Promise.all(
@@ -68,31 +56,24 @@ app.get('/', async (req: Request, res: Response) => {
   );
   res.status(200).send(JSON.stringify({ node: name, fetched: data }));
 
-  console.log(
-    'MSG',
+  messageLogger(
     'Finished work',
-    '||',
-    JSON.stringify({
-      name,
-      port,
-      time: Date.now(),
-      traceId,
+    {
+      nodeId,
       state: nodeState.DONE,
-    }),
+    },
+    true,
   );
 });
 
 app.listen(port, () => {
-  console.log(
-    'MSG',
+  messageLogger(
     `Server Started at Port ${port}`,
-    '||',
-    JSON.stringify({
-      name,
-      port,
-      time: Date.now(),
+    {
+      nodeId,
       state: nodeState.READY,
-    }),
+    },
+    true,
   );
 });
 

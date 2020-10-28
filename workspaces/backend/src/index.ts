@@ -3,7 +3,7 @@ import { spawn, ChildProcess } from 'child_process';
 import http from 'http';
 import express, { Request, Response } from 'express';
 
-import { deserialize } from 'common/src'; // https://github.com/microsoft/TypeScript/issues/33079
+import { deserialize, shouldAllowLogBroadcast } from 'common/src'; // https://github.com/microsoft/TypeScript/issues/33079
 
 const app = express();
 
@@ -14,7 +14,7 @@ const PORT = 8000;
 const wss = new WebSocketServer({ server: httpServer });
 httpServer.listen(PORT);
 
-let children: ChildProcess[] = [];
+let children: ChildProcess[] = []; // holder for all microservice instances
 
 app.get('/create', async (req: Request, res: Response) => {
   console.log('Killing previous server child processes');
@@ -24,17 +24,18 @@ app.get('/create', async (req: Request, res: Response) => {
   const setup = req.query.setup;
   if (typeof setup === 'string') {
     const serviceGraph = deserialize(setup);
-    for await (const args of serviceGraph.map((args) => () =>
+    const promisedGraphArray = serviceGraph.map((args) => () =>
       Promise.resolve(args),
-    )) {
+    );
+    for await (const args of promisedGraphArray) {
       const c = spawn('yarn', ['start', ...(await args())], {
+        // todo: remove yarn, rely on builds in morkspace
         cwd: '../microservice',
       });
       c.stdout.on('data', (data) => {
         const msg: string = data?.toString();
-        if (msg.startsWith('MSG')) {
-          console.log(msg);
-          wss.clients.forEach((client) => client.send(msg, () => {}));
+        if (shouldAllowLogBroadcast(msg)) {
+          wss.clients.forEach((client) => client.send(msg, () => {})); // todo: handle errored websocket sends
         }
       });
       children.push(c);

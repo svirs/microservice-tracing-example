@@ -17,13 +17,14 @@ httpServer.listen(PORT)
 let children: ChildProcess[] = []
 
 app.get("/create", async (req: Request, res: Response) => {
+  console.log('Killing previous server child processes');
   children.forEach(childProcess => childProcess.kill());
   children = [];
 
   const setup = req.query.setup;
   if (typeof setup === "string") {
-    const serviceGraph = deserialize(setup).map(args => () => Promise.resolve(args));
-    for await (const args of serviceGraph) {
+    const serviceGraph = deserialize(setup);
+    for await (const args of serviceGraph.map(args => () => Promise.resolve(args))) {
       const c = spawn('yarn', ['start', ... await args()], {
         cwd: '../microservice',
       });

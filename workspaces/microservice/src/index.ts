@@ -38,7 +38,7 @@ app.get("/", async (req: Request, res: Response) => {
   res.status(200).send(JSON.stringify({node: name, fetched: data}));
 
   console.log("MSG", 'Finished work', "||", JSON.stringify({
-    name, port, time: Date.now(), traceId, state: nodeState.READY
+    name, port, time: Date.now(), traceId, state: nodeState.DONE
   }))
 });
 
